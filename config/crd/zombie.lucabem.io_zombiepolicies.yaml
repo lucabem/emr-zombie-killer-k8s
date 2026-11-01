@@ -1,0 +1,138 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.23.0
+  name: zombiepolicies.zombie.lucabem.io
+spec:
+  group: zombie.lucabem.io
+  names:
+    kind: ZombiePolicy
+    listKind: ZombiePolicyList
+    plural: zombiepolicies
+    shortNames:
+    - zp
+    singular: zombiepolicy
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.inactivityThreshold
+      name: Threshold
+      type: string
+    - jsonPath: .spec.maxStrikes
+      name: MaxStrikes
+      type: integer
+    - jsonPath: .spec.dryRun
+      name: DryRun
+      type: boolean
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          ZombiePolicy is configuration for the watchdog in one namespace: which pods
+          to watch and when they count as zombies. It does not describe a desired state
+          that anything converges to.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              ZombiePolicySpec describes which EMR on EKS pods to watch and when to
+              consider them zombies.
+            properties:
+              container:
+                default: spark-kubernetes-driver
+                description: Container is the container whose logs are inspected.
+                type: string
+              dryRun:
+                description: DryRun only emits events and metrics; nothing is cancelled.
+                type: boolean
+              inactivityThreshold:
+                default: 20m
+                description: |-
+                  InactivityThreshold is how long a pod may go without writing a log line
+                  before a check counts as a strike.
+                type: string
+              maxStrikes:
+                default: 3
+                description: |-
+                  MaxStrikes is the number of consecutive strikes after which the EMR job
+                  run is cancelled.
+                format: int32
+                minimum: 1
+                type: integer
+              selector:
+                description: |-
+                  Selector chooses the pods (in the policy's namespace) to watch.
+                  Defaults to Spark driver pods created by EMR on EKS.
+                properties:
+                  matchExpressions:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      description: |-
+                        A label selector requirement is a selector that contains values, a key, and an operator that
+                        relates the key and values.
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        operator:
+                          description: |-
+                            operator represents a key's relationship to a set of values.
+                            Valid operators are In, NotIn, Exists and DoesNotExist.
+                          type: string
+                        values:
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                            the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                            the values array must be empty. This array is replaced during a strategic
+                            merge patch.
+                          items:
+                            type: string
+                          type: array
+                          x-kubernetes-list-type: atomic
+                      required:
+                      - key
+                      - operator
+                      type: object
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                      map is equivalent to an element of matchExpressions, whose key field is "key", the
+                      operator is "In", and the values array contains only "value". The requirements are ANDed.
+                    type: object
+                type: object
+                x-kubernetes-map-type: atomic
+              strikeInterval:
+                default: 5m
+                description: |-
+                  StrikeInterval is the minimum time between two strikes on the same pod
+                  (equivalent to the old Lambda schedule period). Also the re-check period.
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources: {}

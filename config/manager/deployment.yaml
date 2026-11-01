@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: emr-zombie-killer
+  namespace: emr-zombie-killer
+spec:
+  replicas: 2            # leader election keeps only one active
+  selector:
+    matchLabels: {app: emr-zombie-killer}
+  template:
+    metadata:
+      labels: {app: emr-zombie-killer}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+    spec:
+      serviceAccountName: emr-zombie-killer
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: manager
+          image: <ECR_REPO>/emr-zombie-killer:latest
+          args: ["--leader-elect=true", "--leader-election-namespace=emr-zombie-killer"]
+          env:
+            - name: AWS_REGION
+              value: eu-west-1
+          ports:
+            - {name: metrics, containerPort: 8080}
+          livenessProbe:
+            httpGet: {path: /healthz, port: 8081}
+          readinessProbe:
+            httpGet: {path: /readyz, port: 8081}
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {memory: 256Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}

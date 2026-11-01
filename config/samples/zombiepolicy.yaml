@@ -1,0 +1,15 @@
+# Create one per namespace where your EMR virtual cluster runs jobs.
+# Start with dryRun: true and watch `kubectl get events -n <ns>` for ZombieSuspected / DryRunWouldCancel.
+apiVersion: zombie.lucabem.io/v1alpha1
+kind: ZombiePolicy
+metadata:
+  name: default
+  namespace: spark-jobs
+spec:
+  inactivityThreshold: 20m   # no log line for this long => suspected
+  strikeInterval: 5m         # at most one strike per interval (replaces the Lambda schedule)
+  maxStrikes: 3              # cancel the job run on the 3rd strike
+  dryRun: true
+  # container: spark-kubernetes-driver
+  # selector:                 # default: spark-role=driver AND label emr-containers.amazonaws.com/job.id exists
+  #   matchLabels: {spark-role: driver}

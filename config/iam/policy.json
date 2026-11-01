@@ -1,0 +1,13 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "emr-containers:DescribeJobRun",
+        "emr-containers:CancelJobRun"
+      ],
+      "Resource": "arn:aws:emr-containers:<REGION>:<ACCOUNT_ID>:/virtualclusters/*"
+    }
+  ]
+}
